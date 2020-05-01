@@ -1,0 +1,71 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Thu, 2 Apr 2015 11:10:26 +0100
+Subject: Pick up date from SOURCE_DATE_EPOCH, for reproducible builds
+
+The goal of reproducible builds is that a rebuild of the same source
+code with the same compiler, libraries, etc. should result in the same
+binaries. SOURCE_DATE_EPOCH provides a standard way for build systems
+to fill in the date of the latest source change, typically from a git
+commit or from metadata like the debian/changelog in Debian packages.
+
+Forwarded: https://github.com/OpenArena/gamecode/pull/18
+Applied-upstream: https://github.com/OpenArena/gamecode/commit/3150715fd76beeaf0e9fc54c2d5d5df0a40ebce2
+---
+ Makefile                | 5 +++++
+ code/game/g_main.c      | 4 ++--
+ code/qcommon/q_shared.h | 4 ++++
+ 3 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 6eeba4f..4f9a310 100644
+--- a/Makefile
++++ b/Makefile
+@@ -840,6 +840,11 @@ else
+   DEPEND_CFLAGS =
+ endif
+ 
++# https://reproducible-builds.org/specs/source-date-epoch/
++ifdef SOURCE_DATE_EPOCH
++  BASE_CFLAGS += -DPRODUCT_DATE=\\\"$(shell date --date="@$$SOURCE_DATE_EPOCH" "+%b %_d %Y" | sed -e 's/ /\\\ /'g)\\\"
++endif
++
+ BASE_CFLAGS += -DPRODUCT_VERSION=\\\"$(VERSION)\\\"
+ 
+ ifeq ($(V),1)
+diff --git a/code/game/g_main.c b/code/game/g_main.c
+index 48baac7..426973e 100644
+--- a/code/game/g_main.c
++++ b/code/game/g_main.c
+@@ -204,7 +204,7 @@ static cvarTable_t		gameCvarTable[] = {
+ 
+ 	// noset vars
+ 	{ NULL, "gamename", GAMEVERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+-	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
++	{ NULL, "gamedate", PRODUCT_DATE , CVAR_ROM, 0, qfalse  },
+ 	{ &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
+ 	{ NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+ 
+@@ -693,7 +693,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
+         
+         G_Printf ("------- Game Initialization -------\n");
+         G_Printf ("gamename: %s\n", GAMEVERSION);
+-        G_Printf ("gamedate: %s\n", __DATE__);
++        G_Printf ("gamedate: %s\n", PRODUCT_DATE);
+ 
+ 	srand( randomSeed );
+ 
+diff --git a/code/qcommon/q_shared.h b/code/qcommon/q_shared.h
+index f8b1365..56e2ab8 100644
+--- a/code/qcommon/q_shared.h
++++ b/code/qcommon/q_shared.h
+@@ -42,6 +42,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+   #define PRODUCT_VERSION "1.35"
+ #endif
+ 
++#ifndef PRODUCT_DATE
++#  define PRODUCT_DATE __DATE__
++#endif
++
+ #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
+ 
+ #define MAX_TEAMNAME 32

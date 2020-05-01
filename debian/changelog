@@ -1,0 +1,700 @@
+openarena (0.8.8+dfsg-2) unstable; urgency=medium
+
+  * d/copyright: Sort standalone license paragraph to the end, avoiding
+    a Lintian warning
+  * Standards-Version: 4.2.1 (no changes required)
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 31 Aug 2018 11:32:16 +0100
+
+openarena (0.8.8+dfsg-1) unstable; urgency=medium
+
+  * Repack upstream tarball to exclude non-free lcc compiler as
+    intended: since 0.8.8 it was in code/tools/lcc, not tools/lcc, so
+    the previous get-orig-source target was ineffective.
+    (Closes: #887702)
+    - get-orig-source: Use mk-origtargz instead of reinventing it
+    - Document Files-Excluded in debian/copyright
+    - Use xz compression while we're repacking anyway
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 19 Jan 2018 09:05:31 +0000
+
+openarena (0.8.8-21) unstable; urgency=medium
+
+  * Standards-Version: 4.1.3 (no changes required)
+  * d/p/Disable-Altivec-instructions-on-PowerPC-unless-requested.patch:
+    Add patch to compile without Altivec to support baseline powerpc
+    CPUs. Thanks to GitHub user casey-ac for testing a version of this
+    change in ioquake3. This should also work on powerpcspe
+    (Closes: #701630)
+  * Update Vcs-* to point to salsa.debian.org
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 15 Jan 2018 08:40:26 +0000
+
+openarena (0.8.8-20) unstable; urgency=medium
+
+  * Mark all forwarded patches as having been applied upstream
+  * Remove maintainer script handling for upgrades from versions prior
+    to 0.8.8-10, which is older than current Debian stable and
+    Ubuntu LTS. Upgrades that skip a stable release are not supported.
+    - START_DAEMON=0 in /etc/default/openarena-server is no longer migrated
+      to update-rc.d openarena-server disabled. Use update-rc.d if you want
+      to disable the OpenArena server.
+    - /var/games/openarena-server/.openarena is no longer migrated to
+      /var/games/openarena-server/server.oa.
+  * Remove now-unused lintian override for invoking update-rc.d in a
+    maintainer script
+  * d/control: Set Rules-Requires-Root: no since this package does not
+    install any non-root-owned files
+  * Standards-Version: 4.1.1 (no changes required)
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 30 Oct 2017 11:55:47 +0000
+
+openarena (0.8.8-19) unstable; urgency=medium
+
+  * Redo portability patches based on what went upstream to ioquake3
+    - d/p/Treat-GNU-kFreeBSD-and-GNU-Hurd-as-equivalent-to-GNU-Linu.patch:
+      Treat all GNU platforms as essentially the same for our purposes.
+      This combines what used to be d/p/Fix-FTBFS-on-kFreeBSD.patch and
+      d/p/Add-support-for-the-GNU-Hurd-architecture.patch.
+    - d/p/Makefile-confine-LIB-to-the-one-platform-that-needs-it-na.patch,
+      d/p/build-canonicalize-all-ARM-variants-to-arm-matching-q_pla.patch,
+      d/p/build-define-ARCH_STRING-in-Makefile-on-Linux-and-other-G.patch:
+      Treat all CPU architectures on GNU platforms as at least potentially
+      supported, without having any specific code for the majority of
+      architectures. (ioquake3 PR #129, as released to Debian in
+      ioquake3/1.36+u20150926+dfsg1-1)
+      + In particular this means we will attempt to build on m68k
+        (Closes: #865721)
+    - d/p/Use-LDFLAGS-on-non-Linux-too.patch:
+      Drop patch, no longer needed for any GNU platform. GNU/kFreeBSD
+      and GNU/Hurd both take the GNU/Linux code paths now.
+  * Re-order patch series: backports from upstream, then forwarded patches,
+    and finally Debian-specific (non-upstreamable) patches
+  * Move Debian-specific patches into debian/patches/debian/
+  * Drop openarena-dbg, rely on automatic -dbgsym packages instead
+    - Don't build openarena-server-dbgsym since it would collide with
+      openarena-dbgsym
+  * Use recommended https URL for debian/copyright Format
+  * d/copyright: Document new upstream location
+  * d/control: openarena-server Depends on lsb-base
+  * d/control: Declare Debian Policy 4.0.0 compliance
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 25 Jun 2017 01:38:58 +0100
+
+openarena (0.8.8-18) unstable; urgency=medium
+
+  * Don't install a documentation symlink for LINUXNOTES.gz.
+    That file is outdated and not very useful in a binary distribution
+    like Debian, and openarena-data no longer installs it.
+    (Closes: #857956)
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 18 Jun 2017 18:35:40 +0100
+
+openarena (0.8.8-17) unstable; urgency=medium
+
+  * Move to debhelper compat level 10
+    - don't build in parallel explicitly, it is now the default
+  * debian/rules: align with ioquake3's
+    - enable full compiler handling, but disable -fPIE -pie because this
+      source package only compiles PIC shared objects
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 21 Sep 2016 20:22:58 +0100
+
+openarena (0.8.8-16) unstable; urgency=medium
+
+  * Lock Debian-openarena account in purge instead of deleting it
+    (see #621833)
+  * Standards-Version: 3.9.8 (no further changes needed)
+  * Use SOURCE_DATE_EPOCH to generate PRODUCT_DATE, similar to ioquake3
+  * debian/gbp.conf: use DEP-14 branch names
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 27 Jun 2016 11:04:36 +0100
+
+openarena (0.8.8-15) unstable; urgency=medium
+
+  * Use DEB_VENDOR instead of lsb_release
+  * Drop compatibility with ioquake3 (<< 1.36+u20130504)
+  * debian/rules: simplify by building in a non-platform-specific directory
+  * debian/rules: rely on a q3arch version that accepts command-lines like
+    "q3arch make i386 linux-gnu", to avoid repeated invocation
+  * openarena Recommends openarena-oacmp1 now that it is in Debian,
+    and openarena-server Suggests it
+  * Stop installing the legacy Debian menu file
+    - stop converting the icon to XPM format
+    - no longer needs a build-dependency on imagemagick
+  * Normalize packaging through `wrap-and-sort -abst`
+  * Remove unnecessary debian/tmp prefix from install files
+  * Use https for Vcs-Git, to provide anonymous checkouts that
+    still authenticate the server
+  * Remove host architecture restriction: since 0.8.8-6 it has not actually
+    excluded any Debian architecture
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 22 Jan 2016 11:52:33 +0000
+
+openarena (0.8.8-14) unstable; urgency=medium
+
+  * Add arm64 support by applying Martin Michlmayr's patch from ioquake3,
+    which is also needed here (Closes: #790668)
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 13 Jul 2015 08:52:01 +0100
+
+openarena (0.8.8-13) unstable; urgency=medium
+
+  * Another try at making the build reproducible: force TZ=UTC so the
+    changelog date comes out the same in any timezone, and LC_ALL=C.UTF-8
+    so we always get the same month names. Based on a patch from
+    Reiner Herrmann. (Closes: #784163)
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 04 May 2015 08:55:44 +0100
+
+openarena (0.8.8-12) unstable; urgency=medium
+
+  * Disable patch numbers in debian/patches, to reduce diffstat when patches
+    are re-ordered
+  * Use Debian changelog date as a replacement for __DATE__, for reproducible
+    builds
+  * Adjust logic for installing 0.8.1-, 0.8.5- and 0.8.8-compatible modules:
+    - on the client, move the real files for the 0.8.5/0.8.8-compatible
+      version into a pak6-patch088 subdirectory, so it is a little clearer
+      that it (deliberately) differs from the 0.8.1-compatible version in
+      the pak0 subdirectory
+    - on the client, the fallback version for unknown servers is now
+      a symlink into pak6-patch088 to make it clearer which version is used
+    - on the client, the pak6-patch085 version is a symlink into
+      pak6-patch088 (they appear to be compatible)
+    - on the server, stop installing the 0.8.1-compatible version: the
+      server controls which dialect of the network protocol is used,
+      so only the 0.8.8 game code is necessary (Closes: #781385)
+    - on the server, stop installing cgame and ui modules: the server
+      only needs the qagame module
+  * Upload to unstable
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 29 Apr 2015 10:19:56 +0100
+
+openarena (0.8.8-11) experimental; urgency=medium
+
+  * Fix upgrades of openarena-server on systems that do not have
+    quake3-server, which were broken by insufficient edits to the
+    code taken from src:quake in 0.8.8-10 (Closes: #777468)
+  * Switch Vcs-Browser to https on general principles
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 08 Feb 2015 17:13:31 +0000
+
+openarena (0.8.8-10) experimental; urgency=low
+
+  * Link to readme_088.txt.gz and LINUXNOTES.gz, which are compressed by
+    dh_compress in openarena-088-data and openarena-data respectively
+    (Closes: #708626)
+  * README.Debian: correct location of debian_server.cfg
+    (part of a patch from Markus Koschany, Closes: #719592)
+  * Recommend update-rc.d unconditionally: it "does the right thing"
+    for each of sysvinit, systemd and upstart
+  * Mention service(8) in README.Debian for completeness
+  * Sync server support with quake/11:
+    - remove support for START_DAEMON
+    - if the server was previously disabled via START_DAEMON,
+      do a one-time migration to "update-rc.d $SERVICE disable"
+    - put default for DAEMON_OPTS in /etc/init.d/openarena-server so it can
+      operate without /etc/default/openarena-server
+    - "+exec etc/openarena-server/server.cfg" is no longer part of DAEMON_OPTS
+    - add native systemd units
+    - add optional instanced systemd units for multiple servers
+      per machine; stop documenting how to do this with @reboot cron jobs
+  * Use LDFLAGS on non-Linux too
+  * Canonicalize Vcs-Git, Vcs-Browser and switch Vcs-Browser to cgit
+  * Symlink all of /etc/openarena-server into the OpenArena search path
+    as etc/openarena-server, so "exec etc/openarena-server/server.cfg"
+    now works
+  * Standards-Version: 3.9.6 (no changes needed)
+  * In the .desktop file, describe it as an ActionGame, not an ArcadeGame
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 05 Feb 2015 11:04:07 +0000
+
+openarena (0.8.8-9) unstable; urgency=low
+
+  * Merge from experimental to unstable
+  * Add new watch file, using fakeupstream.cgi to work around the upstream
+    downloads page not being uscan'able (thanks to Bart Martens)
+  * debian/link-modules.sh: add symlinks so that on i386 and alpha, the game
+    code can be loaded by either old ioquake3 (which looks for i386.so, axp.so)
+    or new ioquake3 (which looks for x86.so, alpha.so)
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 12 May 2013 11:36:14 +0100
+
+openarena (0.8.8-8) experimental; urgency=low
+
+  * Merge from 0.8.8-5+deb7u2
+    - Switch /usr/share/doc/openarena-dbg from a symlink to openarena-server
+      to a real directory, fixing missing copyright file on upgrade
+      from wheezy or sid (Closes: #698463) and unwanted dependency on
+      openarena-server
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 19 Jan 2013 13:53:05 +0000
+
+openarena (0.8.8-7) experimental; urgency=low
+
+  * Merge from 0.8.8-5+deb7u1
+    - Add patch from upstream to fix a client-triggerable server crash.
+      Thanks to Poul Sander and Markus Koschany (Closes: #681812)
+  * Request confirmation before enabling auto-downloading, which is
+    a security risk (Closes: #686648)
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 14 Sep 2012 10:35:01 +0100
+
+openarena (0.8.8-6) experimental; urgency=low
+
+  * Switch gbp.conf to experimental branch
+  * Compile on Hurd (patch and testing by Svante Signell, related to
+    #679330)
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 05 Jul 2012 08:57:58 +0100
+
+openarena (0.8.8-5) unstable; urgency=low
+
+  * Don't refuse to start a new openarena-server if there's a stale
+    pid file (Closes: #678543)
+  * Make sure to get the status of the right ioq3ded instance, using
+    the pid file
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 23 Jun 2012 00:36:45 +0100
+
+openarena (0.8.8-4) unstable; urgency=high
+
+  [ Fabian Greffrath ]
+  * Include details of ioquake3 (or ioquake3-server) in openarena (or
+    openarena-server) bug reports
+
+  [ Simon McVittie ]
+  * When we upgraded from before 0.8.8, actually avoid running the server
+    as intended (thanks to Stepan Golosunov for the patch; closes: #673128)
+  * Include CPPFLAGS in CFLAGS for full hardening (the build system doesn't
+    respect CPPFLAGS otherwise)
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 16 Apr 2012 12:18:38 +0100
+
+openarena (0.8.8-3) unstable; urgency=low
+
+  * Fix upgrades of openarena-server from squeeze (Closes: #666769):
+    - create /var/games/openarena-server if necessary
+    - if /etc/default/openarena-server doesn't exist, assume we're upgrading
+      from before the init script existed, and disable the init script
+      by default
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 01 Apr 2012 22:04:29 +0100
+
+openarena (0.8.8-2) unstable; urgency=low
+
+  * Merge from experimental
+  * Depend on today's ioquake3 upload, for sv_dorestart
+  * Use dh_auto_build to get parallel builds
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 31 Mar 2012 22:20:12 +0100
+
+openarena (0.8.8-1) experimental; urgency=low
+
+  [ Peter Eisentraut ]
+  * Add support for "status" action to openarena-server init script
+    (Closes: #647019)
+
+  [ Simon McVittie ]
+  * Improve the -dbg package's description
+  * Depend directly on the split data packages
+  * Update to version 0.8.8 (Closes: #661107)
+    - update README.source, copyright; add get-orig-source
+    - get rid of the unused engine/ directory, move game code from game/
+      to ./, and adapt patches and debian/rules accordingly
+    - depend on openarena-088-data and symlink the extra PK3 file into place
+    - drop patches 0001, 0002, 0039, 0042 (fixed upstream)
+    - drop patch 0036 (unnecessary)
+    - set VERSION to the Debian package version and display it in the menu
+  * Standards-Version: 3.9.3 (no changes)
+  * Use debhelper 9 for compressed, build-ID-based debug symbols
+  * Use /usr/share/dpkg/default.mk to get the CFLAGS and package version
+  * Drop compatibility with ioquake3 < r2075
+  * Add LSB Description header to the openarena-server init script
+  * Install game logic in both packages so openarena doesn't have to depend
+    on openarena-server
+  * Use better destinations for the README, CREDITS symlinks
+  * Change openarena-server to be enabled by default, with a special case
+    to disable it in upgrades from a version where it was disabled
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 26 Feb 2012 22:38:07 +0000
+
+openarena (0.8.5-10) unstable; urgency=low
+
+  [ Bruno "Fuddl" Kleinert ]
+  * As the package uses debhelper (>= 8) the parallel=N stuff can be removed
+    from debian/rules
+
+  [ Simon McVittie ]
+  * Set protocol for ioquake3 >= r2075, as well as for older versions
+  * Use Quake3Arena as our game name, so IPv6 queries to master servers
+    might actually work
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 04 Aug 2011 09:08:32 +0100
+
+openarena (0.8.5-9) unstable; urgency=low
+
+  * Remove build-dependencies that were only there to support the engine,
+    which we no longer build from this source package
+    - in particular, libjpeg62-dev (Closes: #635089)
+  * Force CFLAGS from SDL to not be used, even if it's installed, to make
+    sure builds are consistent
+  * Standards-Version: 3.9.2 (no changes)
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 23 Jul 2011 19:12:43 +0100
+
+openarena (0.8.5-8) unstable; urgency=low
+
+  * Team upload
+  * Do not mess with users' PATH environment variable in
+    /usr/share/applications/openarena.desktop file. Instead call
+    /usr/games/openarena directly.
+
+ -- Bruno "Fuddl" Kleinert <fuddl@debian.org>  Fri, 11 Mar 2011 13:40:55 +0100
+
+openarena (0.8.5-7) unstable; urgency=low
+
+  * Use ~/.openarena, not ~/openarena (Closes: #612782)
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 10 Feb 2011 17:30:00 +0000
+
+openarena (0.8.5-6) unstable; urgency=low
+
+  * Use com_basegame, com_homepath etc. from recent upstream ioquake3
+    - depend on a suitably new snapshot
+    - keep the older build-dependency, since all we actually need is q3arch.sh
+  * Add an openarena-dbg package with debug symbols
+  * Don't strcpy a buffer into itself, squashing a valgrind warning
+  * Declare CG_FairCvars properly, squashing a compiler warning
+  * Convert debian/copyright to machine-readable format
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 05 Feb 2011 22:30:39 +0000
+
+openarena (0.8.5-5+exp3) experimental; urgency=low
+
+  * Make the OPENARENA_BACKTRACE option work correctly
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 16 Jan 2011 22:27:02 +0000
+
+openarena (0.8.5-5+exp2) experimental; urgency=low
+
+  * Create a Debian-openarena user and install an init script (off by default)
+    (Closes: #503106)
+  * Add a README.Debian explaining alternative ways to run the server
+  * Depend on an ioquake3-server new enough to install q3arch, and run that
+    instead of having our own copy
+  * Depend on debhelper 8 and convert the rules file to dh style
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 12 Nov 2010 23:12:26 +0000
+
+openarena (0.8.5-5+exp1) experimental; urgency=low
+
+  * Install wrapper scripts for ioquake3, instead of our own engine
+    - therefore we no longer use a local copy of libjpeg (Closes: #495966)
+    - remove all patches that only change the engine
+    - adjust FreeBSD portability patch to only apply to the game code
+  * Set up debian/rules so DEB_BUILD_OPTIONS="noopt" does a debug build
+  * Improve the man pages
+  * Update q3arch.sh from ioquake3
+    - don't warn when building on arm/armel
+    - output the chosen architecture for the benefit of buildd logs
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 15 Oct 2010 21:17:55 +0100
+
+openarena (0.8.5-5) unstable; urgency=medium
+
+  * Add patch (already upstream as oax r239) to fix a crash if a non-client
+    object is damaged by a non-player source, e.g. setting off the Kamikaze
+    near a powerup (Closes: #599866)
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 11 Oct 2010 19:40:30 +0100
+
+openarena (0.8.5-4) unstable; urgency=low
+
+  * Build a second copy of the game logic and install it in a subdirectory.
+    It turns out that OpenArena 0.8.1 and 0.8.5 aren't network-compatible.
+  * Depend on openarena-data (>= 0.8.5-3~) which causes us to load the
+    0.8.1-compatible game logic whenever the upstream version would use
+    0.8.1's bytecode (Closes: #592965)
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 24 Aug 2010 20:20:07 +0100
+
+openarena (0.8.5-3) unstable; urgency=medium
+
+  * Add patch from oax r203 to fix server crashes if a player joins, then
+    rapidly leaves or dies (Closes: #592020)
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 08 Aug 2010 11:53:58 +0100
+
+openarena (0.8.5-2) unstable; urgency=low
+
+  [ Simon McVittie ]
+  * Improve patch tagging/attribution
+  * Add patch from ioquake3 r1788 to avoid buffer overflows
+  * Upload to unstable, now that -data 0.8.1+dfsg1-1 has migrated    
+
+  [ Ansgar Burchardt ]
+  * debian/control: Remove myself from Uploaders.
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 03 Aug 2010 10:58:54 +0100
+
+openarena (0.8.5-1) experimental; urgency=low
+
+  * New upstream version (Closes: #573995)
+  * Repack upstream tarball to have engine and game subdirectories; the
+    engine subdirectory is from ioquake3 svn, and the game subdirectory
+    is from Open Arena Expanded (the stuff previously applied as a patch)
+  * Apply some of the OpenArena changes to ioquake3 as Debian patches; move
+    the remaining OpenArena changes to debian/unapplied/
+  * Adjust previous Debian patches to apply to this structure
+  * q3arch.sh: be more pedantic about the listed architectures, since they
+    have to be kept in sync with q_platform.h (possibly fixing OA on mipsel,
+    if it will even run there)
+  * Add a stub watch file explaining why we can't use uscan for OA
+  * Standards-Version: 3.9.1 (no changes needed)
+    - one known Policy violation: the embedded libjpeg is filed as #495966
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 29 Jul 2010 21:05:41 +0100
+
+openarena (0.8.1-8) unstable; urgency=low
+
+  * Add myself to Uploaders
+  * Standards-Version: 3.9.0 (no changes needed)
+  * Ship the source code for the game logic (normally in QVN bytecode files,
+    which need a non-free compiler), from openarena-modSDK-0.8.1.tar.bz2;
+    compile it to native code and package it in openarena-server
+    (Closes: #559240)
+  * Make openarena depend on openarena-server, to avoid having to add a third
+    binary package for the game code (this adds less than 1MB to an
+    installation of openarena)
+  * Load data from /usr/lib, and create symlinks to the PK3 files in
+    /usr/share, to avoid having to define yet another search path
+  * Load game logic as native code if the QVM file starts with magic number
+    'NTVE', even on pure servers
+  * Tighten versioned dependency on openarena-data - now that we're shipping
+    the game logic here and the rest in openarena-data, we need to make sure
+    they're in sync
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 22 Jul 2010 00:38:00 +0100
+
+openarena (0.8.1-7) unstable; urgency=low
+
+  * Use memmove instead of strcpy for overlapping memory regions.
+    (LP: #554748)
+    + new patch: memmove.patch
+  * Fix spelling error.
+    + new patch: spelling.patch
+  * debian/control: Add ${misc:Depends} to binary package dependencies.
+  * Bump Standards-Version to 3.8.4 (no changes).
+
+ -- Ansgar Burchardt <ansgar@43-1.org>  Mon, 07 Jun 2010 13:49:36 +0900
+
+openarena (0.8.1-6) unstable; urgency=low
+
+  * Convert source package to format 3.0 quilt
+    * Drop build dependency on quilt
+    * Remove quilt calls from debian/rules
+    * Drop build dependency on sharutils, because we now can ship (binary) PNG
+      icons in debian 3.0 source packages
+  * Import a patch from Simon McVittie (see #546184 for details) to fix building
+    openarena on amd64 processors with a 32bit userland. Thanks to Simon
+    McVittie! (Closes: #546184)
+  * Allow parallel builds for SMP machines to speed up building openarena
+  * Update Vcs-* fields as this package now lives in Git
+
+ -- Bruno "Fuddl" Kleinert <fuddl@debian.org>  Thu, 19 Nov 2009 17:37:45 +0100
+
+openarena (0.8.1-5) unstable; urgency=low
+
+  [ Gonéri Le Bouder ]
+  * Segfault when deleting non-existent ban address 0, thanks Guillaume
+    Delacour (Closes: #532212)
+  * Standards version: 3.8.3
+   - README.source to explain how the quilt patch system works 
+  
+  [ Paul Wise ]
+  * Drop the dh_desktop call
+
+ -- Gonéri Le Bouder <goneri@rulezlan.org>  Fri, 21 Aug 2009 20:16:35 +0200
+
+openarena (0.8.1-4) unstable; urgency=low
+
+  [ Gonéri Le Bouder ]
+  * fix FTBFS on kFreeBSD, thanks Cyril Brulebois (#413617)
+  * Standard version 3.8.1, no change
+
+  [ Paul Wise ]
+  * Makes the desktop file valid according to desktop-file-validate
+
+ -- Gonéri Le Bouder <goneri@rulezlan.org>  Sun, 19 Apr 2009 19:49:34 +0200
+
+openarena (0.8.1-3) unstable; urgency=low
+
+  * Turn on BUILD_CLIENT_SMP (Closes: #517894) 
+
+ -- Gonéri Le Bouder <goneri@rulezlan.org>  Mon, 02 Mar 2009 21:47:05 +0100
+
+openarena (0.8.1-2) unstable; urgency=low
+
+  * Upload to unstable
+  * Add myself in uploaders:
+
+ -- Gonéri Le Bouder <goneri@rulezlan.org>  Sat, 14 Feb 2009 15:42:55 +0100
+
+openarena (0.8.1-1) experimental; urgency=low
+
+  * New upstream release
+  * Remove dfsg from version string because upstream no longer distributes
+    non-free code
+  * Update my email address where necessary
+  * Install documentation files in the binary packages openarena and
+    openarena-server 
+  * Switch to quilt as patch management system
+    * Use quilt in debian/rules
+    * Import existing patches to quilt
+    * Drop dpatch and add quilt als build dependency
+  * Refresh/edit 10_remove_upstream_build_flags.diff: We want to keep
+    distribution-specific build flags in our rules file
+  * Add 20_dont_build_shipped_jpeg.diff to build against system jpeg library
+    (Closes: #495966)
+  * Add 30_link_against_local_libspeex.diff to build against system speex and
+    speexdsp libraries
+
+ -- Bruno "Fuddl" Kleinert <fuddl@debian.org>  Sun, 23 Nov 2008 23:19:22 +0100
+
+openarena (0.7.7+dfsg1-1) unstable; urgency=low
+
+  * Remove non-free code/tools/lcc (Closes: #496346)
+    + Remove hunk from patch 10_fix_build_and_binary_on_alpha
+    + debian/rules: Add BUILD_GAME_QVM=0 to $(MAKE) call
+      (thanks to Peter De Wachter)
+  * Remove code/libs containing binary libraries for Mac OS X and Win32
+  * debian/copyright: Explain which parts of upstream's sources were removed
+  * debian/rules: replace ${source:Upstream-Version} by 0.7.7
+    because the variable also contains the `+dfsg1' part
+  * Add -fsigned-char to compiler options (Closes: #487970)
+    (thanks to Peter De Wachter)
+  * Add myself to Uploaders
+  * debian/control: Remove article from beginning of short description,
+    don't start short description with a capital letter
+  * debian/openarena.6: Escape minus signs
+    + fixes lintian warnings: hyphen-used-as-minus-sign
+
+ -- Ansgar Burchardt <ansgar@43-1.org>  Fri, 05 Sep 2008 21:14:51 +0200
+
+openarena (0.7.7-1) unstable; urgency=low
+
+  * New upstream release (Closes: #485675)
+  * Add 10_remove_upstream_build_flags.dpatch to remove hard-wired build flags
+  * Get rid of wrapper scripts
+    * Update manpages to reflect the lack of --help, which was formerly
+      interpreted by the wrapper scripts
+    * Update debian/rules to install binaries in /usr/games instead of
+      /usr/lib/games/openarena
+
+ -- Bruno "Fuddl" Kleinert <fuddl@tauware.de>  Tue, 24 Jun 2008 12:03:06 +0200
+
+openarena (0.7.6-1) unstable; urgency=low
+
+  [ Bruno "Fuddl" Kleinert ]
+  * New upstream release
+  * Freshen 10_fix_build_and_binary_on_alpha.dpatch to apply to latest
+    upstream sources
+  * Remove 10-fix_menudef.h_includes.dpatch which pulled in a missing header
+    file. The header is now included in the upstream tarball.
+  * Remove debian/watch, because upstream places its new releases too often to
+    different download locations
+  * Updated debian/copyright to reflect the download location
+  * Expand copyright years in debian/copyright
+
+ -- Bruno "Fuddl" Kleinert <fuddl@tauware.de>  Thu, 24 Apr 2008 14:33:54 +0200
+
+openarena (0.7.0-3) unstable; urgency=low
+
+  [ Bruno "Fuddl" Kleinert ]
+  * Rename XS-Vcs-fields to Vcs-fields in the control file
+  * Remove Homepage URLs from package descriptions
+  * Update my email address where necessary
+  * Update to standards version 3.7.3.0. No changes
+  * Add comment to 10-fix_menudef.h_includes.dpatch. Found by lintian
+  * Install PNG desktop icon to correct location
+  * Build-Depend on libcurl4-gnutls-dev instead of deprecated libcurl3-dev
+  * Build-depend on debhelper >= 5.0.51. Found by lintian
+    * We need dh_icons of version >= 5.0.51
+
+  [ Ansgar Burchardt ]
+  * Remove deprecated Encoding key from .desktop file
+
+ -- Bruno "Fuddl" Kleinert <fuddl@tauware.de>  Sat, 22 Mar 2008 14:23:16 +0100
+
+openarena (0.7.0-2) unstable; urgency=low
+
+  * Fix inadvertent installation of files below usr/share/doc/openarena-server
+    by the openarena (client) package. (Closes: #440173)
+
+  [ Barry deFreese ]
+  * Add watch file
+
+  [ Jon Dowland ]
+  * add Homepage: control field to source stanza
+
+ -- Jon Dowland <jon@alcopop.org>  Mon, 03 Dec 2007 17:45:55 +0000
+
+openarena (0.7.0-1) unstable; urgency=low
+
+  [ Bruno "Fuddl" Kleinert ]
+  * New upstream release (Closes: #432477)
+  * Build-depend on libcurl3-dev (Closes: #430739)
+  * Adjuste Debian menu file to the new menu structure
+  * Improved README.Debian
+  * Unified any kind of "Open Arena" spelling to "OpenArena"
+  * 10_fix_buffer_overflow_and_format_string_bug_in_auth_server_response.dpatch
+    merged with upstream
+  * 10_fix-gcc4.2-compilation.dpatch fixed by upstream
+  * Add 10-fix_menudef.h_includes.dpatch to add forgotten header and fix wrong
+    #include-paths of that file
+  * Add build dependency libvorbis-dev
+  * Documentation moved into openarena-data
+
+  [ Cyril Brulebois ]
+  * Added XS-Vcs-Svn and XS-Vcs-Browser fields in the control file.
+
+ -- Bruno "Fuddl" Kleinert <fuddl@gmx.de>  Fri, 10 Aug 2007 19:54:35 +0200
+
+openarena (0.6.0-4) unstable; urgency=low
+
+  * Update build dependencies to libcurl4
+  * Add patch to make the engine compile with gcc-4.2 (Closes: #410178)
+
+ -- Bruno "Fuddl" Kleinert <fuddl@gmx.de>  Fri, 22 Jun 2007 12:42:36 +0200
+
+openarena (0.6.0-3) unstable; urgency=low
+
+  * Exchanged "Quake 3" stuff in wrapper scripts by "OpenArena"
+  * Replaced german-english mixture 'ego-shooter' by first-person shooter (Closes: #411205)
+  * Fixed bash-specific syntax in the openarena wrapper script (Closes: #411350)
+  * Don't dlopen() libcurl to have it automatically in binary dependency list
+  * Fix build and resulting binary on alpha. Thanks Steve Langasek for the
+    patch! (Closes: #410555)
+
+ -- Bruno "Fuddl" Kleinert <fuddl@gmx.de>  Wed,  2 May 2007 21:28:55 +0200
+
+openarena (0.6.0-2) unstable; urgency=low
+
+  [ Bruno "Fuddl" Kleinert ]
+  * Fix a buffer overflow in auth server response processing
+
+  [ Gonéri Le Bouder ]
+  * call dh_desktop to run update-desktop-database
+
+  [ Jon Dowland ]
+  * fix spelling in debian/control
+
+ -- Jon Dowland <jon@alcopop.org>  Sat, 20 Jan 2007 12:28:09 +0000
+
+openarena (0.6.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #380100)
+
+ -- Bruno "Fuddl" Kleinert <fuddl@gmx.de>  Wed,  6 Dec 2006 15:38:12 +0100

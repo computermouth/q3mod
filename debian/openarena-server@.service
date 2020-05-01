@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenArena game server (instance: "%i")
+After=network.target
+
+[Service]
+Type=simple
+User=Debian-openarena
+Environment=DAEMON_OPTS=
+EnvironmentFile=-/etc/default/openarena-server@%i
+ExecStart=/usr/games/openarena-server +set com_homepath %i.oa $DAEMON_OPTS +exec etc/openarena-server/%i.cfg
+Restart=on-failure
+RestartPreventExitStatus=72
+# hardening
+CapabilityBoundingSet=
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

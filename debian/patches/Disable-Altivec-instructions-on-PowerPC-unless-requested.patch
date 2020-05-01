@@ -1,0 +1,108 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Wed, 4 Oct 2017 08:38:36 +0100
+Subject: Disable Altivec instructions on PowerPC unless requested
+
+Baseline PowerPC CPUs are not guaranteed to have Altivec instructions
+available, even if they are 64-bit.
+
+Unlike SSE and similar extensions on x86, there does not seem to be
+a way to enable conditional, targeted use of Altivec based on runtime
+detection (which is what ioquake3 wants to do) without also giving the
+compiler permission to use Altivec in code generation; so to not crash
+on the affected CPUs, we'll have to turn it off altogether.
+
+At one point Altivec was an important optimization, because the
+most commonly available PowerPC CPUs (in Apple G4/G5 hardware)
+had the Altivec instructions, and they were a significant benefit
+there. However, Apple haven't sold PowerPC devices for over 10 years,
+some more recently-manufactured PowerPC CPUs like the (64-bit) Freescale
+e5500 omit Altivec, and CPUs in general are a lot faster now than they
+were when the idTech3 engine was first released, hopefully making the
+optimization unnecessary.
+
+This commit uses -mno-altivec to force Altivec instructions not to be
+emitted, unless Altivec is requested via "make USE_ALTIVEC=1". The Apple
+fork of gcc doesn't document the corresponding -fno-altivec option, so
+we'll have to assume that omitting -faltivec is enough (but non-Altivec
+PowerPC Macs haven't been sold for a long time anyway).
+
+Similar to https://github.com/ioquake/ioq3/pull/337 in ioquake3.
+
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=701630
+Forwarded: no
+---
+ Makefile                  | 27 +++++++++++++++++++++++----
+ code/qcommon/q_platform.h |  2 +-
+ 2 files changed, 24 insertions(+), 5 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 4f9a310..569c44d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -135,6 +135,10 @@ ifndef USE_LOCAL_HEADERS
+ USE_LOCAL_HEADERS=1
+ endif
+ 
++ifndef USE_ALTIVEC
++USE_ALTIVEC=0
++endif
++
+ #############################################################################
+ 
+ BD=$(BUILD_DIR)/debug-$(PLATFORM)-$(ARCH)
+@@ -258,11 +262,19 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu" "gnu")
+     HAVE_VM_COMPILED=true
+   else
+   ifeq ($(ARCH),ppc)
+-    BASE_CFLAGS += -maltivec
++    ifeq ($(USE_ALTIVEC),1)
++      BASE_CFLAGS += -maltivec -DUSE_ALTIVEC
++    else
++      BASE_CFLAGS += -mno-altivec
++    endif
+     HAVE_VM_COMPILED=true
+   endif
+   ifeq ($(ARCH),ppc64)
+-    BASE_CFLAGS += -maltivec
++    ifeq ($(USE_ALTIVEC),1)
++      BASE_CFLAGS += -maltivec -DUSE_ALTIVEC
++    else
++      BASE_CFLAGS += -mno-altivec
++    endif
+     HAVE_VM_COMPILED=true
+   endif
+   ifeq ($(ARCH),sparc)
+@@ -335,11 +347,18 @@ ifeq ($(PLATFORM),darwin)
+   BASE_CFLAGS = -Wall -Wimplicit -Wstrict-prototypes
+ 
+   ifeq ($(ARCH),ppc)
+-    BASE_CFLAGS += -faltivec
++    ifeq ($(USE_ALTIVEC),1)
++      # -fno-altivec doesn't seem to exist according to
++      # http://www.manpages.info/macosx/gcc.1.html so we'll just have to
++      # hope that the default is no Altivec
++      BASE_CFLAGS += -faltivec -DUSE_ALTIVEC
++    endif
+     OPTIMIZE += -O3
+   endif
+   ifeq ($(ARCH),ppc64)
+-    BASE_CFLAGS += -faltivec
++    ifeq ($(USE_ALTIVEC),1)
++      BASE_CFLAGS += -faltivec -DUSE_ALTIVEC
++    endif
+   endif
+   ifeq ($(ARCH),i386)
+     OPTIMIZE += -march=prescott -mfpmath=sse
+diff --git a/code/qcommon/q_platform.h b/code/qcommon/q_platform.h
+index fc8d40d..3e3f3b5 100644
+--- a/code/qcommon/q_platform.h
++++ b/code/qcommon/q_platform.h
+@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ #if (defined(powerc) || defined(powerpc) || defined(ppc) || \
+ 	defined(__ppc) || defined(__ppc__)) && !defined(C_ONLY)
+ #define idppc 1
+-#if defined(__VEC__)
++#if defined(__VEC__) && defined(USE_ALTIVEC)
+ #define idppc_altivec 1
+ #ifdef MACOS_X  // Apple's GCC does this differently than the FSF.
+ #define VECCONST_UINT8(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \

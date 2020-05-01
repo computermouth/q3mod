@@ -1,0 +1,122 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Fri, 14 Sep 2012 10:23:06 +0100
+Subject: Request confirmation if a user enables auto-downloading
+
+The Q3 UI toolkit isn't great at large amounts of text, so just point
+to a deb.li link into the Debian wiki.
+
+Origin: vendor, Debian
+Bug-Debian: http://bugs.debian.org/686648
+---
+ code/q3_ui/ui_firstconnect.c | 17 +++++++++++++++--
+ code/q3_ui/ui_local.h        |  1 +
+ code/q3_ui/ui_preferences.c  | 40 +++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 55 insertions(+), 3 deletions(-)
+
+diff --git a/code/q3_ui/ui_firstconnect.c b/code/q3_ui/ui_firstconnect.c
+index 5291aea..7fac4b8 100644
+--- a/code/q3_ui/ui_firstconnect.c
++++ b/code/q3_ui/ui_firstconnect.c
+@@ -194,7 +194,17 @@ FirstConnect_StatusBar_Download
+ =================
+ */
+ static void FirstConnect_StatusBar_Download( void* ptr ) {
+-		UI_DrawString( 320, 440, "Auto download missing maps and mods", UI_CENTER|UI_SMALLFONT, colorWhite );
++		UI_DrawString( 320, 440, "Security risk, see <http://deb.li/Q3DL>", UI_CENTER|UI_SMALLFONT, colorWhite );
++}
++
++static void AutoDownloadAction( qboolean result )
++{
++	if (result) {
++		trap_Cvar_SetValue( "cl_allowDownload", 1 );
++	} else {
++		trap_Cvar_SetValue( "cl_allowDownload", 0 );
++	}
++	s_firstconnect.allowdownload.curvalue = result;
+ }
+ 
+ /*
+@@ -251,8 +261,11 @@ static void FirstConnect_Event( void* ptr, int event )
+                         break;
+ 
+                 case ID_ALLOWDOWNLOAD:
+-                        trap_Cvar_SetValue( "cl_allowDownload", s_firstconnect.allowdownload.curvalue );
+                         trap_Cvar_SetValue( "sv_allowDownload", s_firstconnect.allowdownload.curvalue );
++                        if ( s_firstconnect.allowdownload.curvalue )
++				UI_ConfirmAutoDownload( AutoDownloadAction );
++			else
++				trap_Cvar_SetValue( "cl_allowDownload", 0 );
+                         break;
+ 
+                 case ID_DELAGHITSCAN:
+diff --git a/code/q3_ui/ui_local.h b/code/q3_ui/ui_local.h
+index 0ba5512..1e5b1f6 100644
+--- a/code/q3_ui/ui_local.h
++++ b/code/q3_ui/ui_local.h
+@@ -458,6 +458,7 @@ extern void PlayerSettings_Cache( void );
+ // ui_preferences.c
+ //
+ extern void UI_PreferencesMenu( void );
++extern void UI_ConfirmAutoDownload( void (*action) (qboolean) );
+ extern void Preferences_Cache( void );
+ 
+ //
+diff --git a/code/q3_ui/ui_preferences.c b/code/q3_ui/ui_preferences.c
+index 32b693f..94d80a0 100644
+--- a/code/q3_ui/ui_preferences.c
++++ b/code/q3_ui/ui_preferences.c
+@@ -131,6 +131,41 @@ static void Preferences_SetMenuItems( void ) {
+         s_preferences.teamchatbeep.curvalue     = trap_Cvar_VariableValue( "cg_teamChatBeep" ) != 0;
+ }
+ 
++
++static void AutoDownloadAction( qboolean result )
++{
++	if (result) {
++		trap_Cvar_SetValue( "cl_allowDownload", 1 );
++	} else {
++		trap_Cvar_SetValue( "cl_allowDownload", 0 );
++	}
++	s_preferences.allowdownload.curvalue = result;
++}
++
++static void UI_ConfirmAutoDownload_Draw ( void )
++{
++	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0,
++		"WARNING: This is a security risk.",
++		UI_CENTER|UI_SMALLFONT, color_yellow );
++	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1,
++		"More information: <http://deb.li/Q3DL>",
++		UI_CENTER|UI_SMALLFONT, color_yellow );
++}
++
++void UI_ConfirmAutoDownload( void (*action) (qboolean) )
++{
++	if (trap_Cvar_VariableValue( "cl_allowDownload" ) != 0) {
++		/* already set */
++		return;
++	}
++
++	UI_ConfirmMenu_Style(
++		"Auto-download?",
++		UI_CENTER|UI_SMALLFONT,
++		UI_ConfirmAutoDownload_Draw,
++		action);
++}
++
+ static void Preferences_Event( void* ptr, int notification ) {
+ 	if( notification != QM_ACTIVATED ) {
+ 		return;
+@@ -216,8 +251,11 @@ static void Preferences_Event( void* ptr, int notification ) {
+ 		break;
+ 
+ 	case ID_ALLOWDOWNLOAD:
+-		trap_Cvar_SetValue( "cl_allowDownload", s_preferences.allowdownload.curvalue );
+ 		trap_Cvar_SetValue( "sv_allowDownload", s_preferences.allowdownload.curvalue );
++		if ( s_preferences.allowdownload.curvalue )
++			UI_ConfirmAutoDownload( AutoDownloadAction );
++		else
++			trap_Cvar_SetValue( "cl_allowDownload", 0 );
+ 		break;
+                
+         case ID_DELAGHITSCAN:

@@ -1,0 +1,58 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sat, 24 Jun 2017 19:06:20 +0100
+Subject: Makefile: confine $(LIB) to the one platform that needs it,
+ namely irix64
+
+It isn't mentioned anywhere else, and deleting it from the Linux code
+path means we don't need to maintain an exhaustive list of 64-bit
+architectures.
+
+(cherry picked from ioquake3 commit 071965b3f0647385f3c32a49c1df5e125550969c)
+
+Forwarded: https://github.com/OpenArena/gamecode/pull/17
+Applied-upstream: https://github.com/OpenArena/gamecode/commit/732d32079b6675f8595471af7d252e190c80f006
+---
+ Makefile | 16 +---------------
+ 1 file changed, 1 insertion(+), 15 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 023d390..84b58b3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -208,9 +208,6 @@ endif
+ # SETUP AND BUILD -- LINUX
+ #############################################################################
+ 
+-## Defaults
+-LIB=lib
+-
+ INSTALL=install
+ MKDIR=mkdir
+ 
+@@ -218,18 +215,6 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu" "gnu")
+ 
+   ifeq ($(ARCH),alpha)
+     ARCH=axp
+-  else
+-  ifeq ($(ARCH),x86_64)
+-    LIB=lib64
+-  else
+-  ifeq ($(ARCH),ppc64)
+-    LIB=lib64
+-  else
+-  ifeq ($(ARCH),s390x)
+-    LIB=lib64
+-  endif
+-  endif
+-  endif
+   endif
+ 
+   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
+@@ -669,6 +654,7 @@ else # ifeq netbsd
+ #############################################################################
+ 
+ ifeq ($(PLATFORM),irix64)
++  LIB=lib
+ 
+   ARCH=mips  #default to MIPS
+ 

@@ -1,0 +1,14 @@
+OpenArena for Debian
+====================
+
+In the Debian package of the OpenArena client, flares (light gloss effect around
+light sources) is disabled by default, because it causes a performance 
+loss on certain graphics hardware (Intel cards and maybe others). On ATI or 
+NVIDIA cards (and maybe others) you won't notice a great performance penalty if 
+flares are enabled.
+
+To enable the flare effect, launch OpenArena and open the in-game console by 
+pressing <Shift>+<Esc>, then type "\r_flares 1" (without the quotes). If you
+notice a performance loss, you can disable flares again by typing "\r_flares 0"
+(without the quotes) in the in-game console. This setting is saved
+automatically, when OpenArena is closed.

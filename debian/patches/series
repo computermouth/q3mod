@@ -1,0 +1,10 @@
+Fix-for-crashing-the-server-by-making-a-callvote-to-.patch
+Treat-GNU-kFreeBSD-and-GNU-Hurd-as-equivalent-to-GNU-Linu.patch
+Makefile-confine-LIB-to-the-one-platform-that-needs-it-na.patch
+build-canonicalize-all-ARM-variants-to-arm-matching-q_pla.patch
+build-define-ARCH_STRING-in-Makefile-on-Linux-and-other-G.patch
+Pick-up-date-from-SOURCE_DATE_EPOCH-for-reproducible-buil.patch
+Disable-Altivec-instructions-on-PowerPC-unless-requested.patch
+debian/Use-a-cpp-macro-for-the-game-code-version-so-package.patch
+debian/Request-confirmation-if-a-user-enables-auto-download.patch
+debian/Add-OPENARENA_081_COMPATIBLE-define-for-network-comp.patch

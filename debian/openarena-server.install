@@ -1,0 +1,4 @@
+debian/openarena-server@.service lib/systemd/system
+debian/scripts/openarena-server usr/games
+debian/server.cfg etc/openarena-server
+usr/lib/openarena-server/*/*.so

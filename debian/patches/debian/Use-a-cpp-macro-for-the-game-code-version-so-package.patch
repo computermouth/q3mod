@@ -1,0 +1,63 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sun, 26 Feb 2012 17:38:46 +0000
+Subject: Use a cpp macro for the game-code version so packages can override
+ it
+
+Also draw it at a variable location, so it's right-aligned.
+
+Origin: vendor, Debian
+Forwarded: not-needed, Debian-specific
+---
+ Makefile                | 2 +-
+ code/q3_ui/ui_menu.c    | 2 +-
+ code/qcommon/q_shared.h | 4 ++--
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 569c44d..c5a7ca4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -189,7 +189,7 @@ ifeq ($(SDL_CFLAGS),)
+ endif
+ 
+ # version info
+-VERSION=1.36
++VERSION=OAX
+ 
+ USE_SVN=
+ ifeq ($(wildcard .svn),.svn)
+diff --git a/code/q3_ui/ui_menu.c b/code/q3_ui/ui_menu.c
+index c407a45..0a5ba8f 100644
+--- a/code/q3_ui/ui_menu.c
++++ b/code/q3_ui/ui_menu.c
+@@ -239,7 +239,7 @@ static void Main_MenuDraw( void ) {
+ 		UI_DrawString( 320, 444, "read COPYING for details.", UI_CENTER|UI_SMALLFONT, color );
+                 
+                 //Draw version.
+-                UI_DrawString( 640-40, 480-14, "^70.8.8", UI_SMALLFONT, color );
++                UI_DrawString( 640 - (8 * strlen(PRODUCT_VERSION) + 1), 480-14, S_COLOR_WHITE PRODUCT_VERSION, UI_SMALLFONT, color );
+                 if((int)trap_Cvar_VariableValue("protocol")!=71)
+                     UI_DrawString( 0, 480-14, va("^7Protocol: %i",(int)trap_Cvar_VariableValue("protocol")), UI_SMALLFONT, color);
+ }
+diff --git a/code/qcommon/q_shared.h b/code/qcommon/q_shared.h
+index 56e2ab8..ded56bb 100644
+--- a/code/qcommon/q_shared.h
++++ b/code/qcommon/q_shared.h
+@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ // A user mod should never modify this file
+ 
+ //#ifdef STANDALONE
+-  #define PRODUCT_NAME			"ioq3+oa"
++  #define PRODUCT_NAME			"OpenArena"
+   #define BASEGAME			"baseoa"
+   #define CLIENT_WINDOW_TITLE     	"OpenArena"
+   #define CLIENT_WINDOW_MIN_TITLE 	"OA"
+@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ #endif*/
+ 
+ #ifdef _MSC_VER
+-  #define PRODUCT_VERSION "1.35"
++  #define PRODUCT_VERSION "OAX"
+ #endif
+ 
+ #ifndef PRODUCT_DATE

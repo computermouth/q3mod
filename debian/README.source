@@ -1,0 +1,19 @@
+OpenArena Debian source
+=======================
+
+The upstream tarball for this package is the source for the game code,
+distributed by upstream as Quake III Arena bytecode (cgame.qvm, qagame.qvm
+and ui.qvm), and in Debian as native code (cgame*.so, qagame*.so and ui*.so).
+
+The upstream svn repository is <http://oax.googlecode.com/svn/>. Contrary
+to what the README says, OpenArena version 0.8.8 appears to be based on
+revision 280, with revisions 283, 288 and 291 cherry-picked, the version
+in Main_MenuDraw changed from OAX to 0.8.8, and COPYING, README-0.8.8,
+README-0.8.8~ and linux_scripts/supermake.local added.
+
+The repacked source tarball distributed in Debian omits tools/lcc (the
+bytecode compiler, which is non-free) and windows_scripts/*.exe (precompiled
+Windows binaries for lcc and q3asm).
+
+In a normal OpenArena build, QVM files would be built from these sources
+using lcc. In Debian we build them as native-code using gcc instead.

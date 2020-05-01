@@ -1,0 +1,383 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sun, 26 Feb 2012 14:25:51 +0000
+Subject: Add OPENARENA_081_COMPATIBLE define for network compat with 0.8.1
+
+0.8.1 was approximately compatible with Quake III Arena, whereas 0.8.5
+is more like Team Arena. Unfortunately, these are not the same.
+
+Not forwarded: upstream expect everyone to use the precompiled bytecode they
+supply, which was built from unmodified 0.8.5 and 0.8.1 source code. We're not
+doing that in Debian for DFSG reasons, and I'd rather not add a second complete
+copy of the source.
+
+Origin: vendor, Debian
+Bug: http://openarena.ws/board/index.php?topic=3717.0
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=592965
+Forwarded: not-needed, Debian-specific
+---
+ Makefile              |  4 ++++
+ code/cgame/cg_draw.c  |  6 +++---
+ code/game/ai_dmq3.c   |  2 ++
+ code/game/bg_misc.c   | 15 ++++++++++++---
+ code/game/bg_pmove.c  |  2 ++
+ code/game/bg_public.h | 11 ++++++++++-
+ code/game/g_active.c  | 11 ++++++++++-
+ code/game/g_combat.c  |  4 ++++
+ code/game/g_items.c   |  9 ++++++++-
+ 9 files changed, 55 insertions(+), 9 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index c5a7ca4..84204cf 100644
+--- a/Makefile
++++ b/Makefile
+@@ -866,6 +866,10 @@ endif
+ 
+ BASE_CFLAGS += -DPRODUCT_VERSION=\\\"$(VERSION)\\\"
+ 
++ifeq ($(OPENARENA_081_COMPATIBLE),1)
++  BASE_CFLAGS += -DOPENARENA_081_COMPATIBLE
++endif
++
+ ifeq ($(V),1)
+ echo_cmd=@:
+ Q=
+diff --git a/code/cgame/cg_draw.c b/code/cgame/cg_draw.c
+index 391e458..7ea721b 100644
+--- a/code/cgame/cg_draw.c
++++ b/code/cgame/cg_draw.c
+@@ -1902,7 +1902,6 @@ static void CG_DrawHoldableItem( void ) {
+ }
+ #endif // MISSIONPACK
+ 
+-#ifndef MISSIONPACK
+ /*
+ ===================
+ CG_DrawPersistantPowerup
+@@ -1910,6 +1909,7 @@ CG_DrawPersistantPowerup
+ */
+ #if 1 // sos001208 - DEAD // sago - ALIVE
+ static void CG_DrawPersistantPowerup( void ) { 
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	int		value;
+ 
+ 	value = cg.snap->ps.stats[STAT_PERSISTANT_POWERUP];
+@@ -1917,9 +1917,9 @@ static void CG_DrawPersistantPowerup( void ) {
+ 		CG_RegisterItemVisuals( value );
+ 		CG_DrawPic( 640-ICON_SIZE, (SCREEN_HEIGHT-ICON_SIZE)/2 - ICON_SIZE, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
+ 	}
++#endif
+ }
+ #endif
+-#endif // MISSIONPACK
+ 
+ 
+ /*
+@@ -3316,8 +3316,8 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
+ 
+                         #ifndef MISSIONPACK
+ 			CG_DrawHoldableItem();
+-			CG_DrawPersistantPowerup();
+ 			#endif
++			CG_DrawPersistantPowerup();
+ 
+                         CG_DrawReward();
+ 		}
+diff --git a/code/game/ai_dmq3.c b/code/game/ai_dmq3.c
+index f8c4173..3200799 100644
+--- a/code/game/ai_dmq3.c
++++ b/code/game/ai_dmq3.c
+@@ -1878,10 +1878,12 @@ void BotUpdateInventory(bot_state_t *bs) {
+ 	bs->inventory[INVENTORY_INVISIBILITY] = bs->cur_ps.powerups[PW_INVIS] != 0;
+ 	bs->inventory[INVENTORY_REGEN] = bs->cur_ps.powerups[PW_REGEN] != 0;
+ 	bs->inventory[INVENTORY_FLIGHT] = bs->cur_ps.powerups[PW_FLIGHT] != 0;
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	bs->inventory[INVENTORY_SCOUT] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_SCOUT;
+ 	bs->inventory[INVENTORY_GUARD] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_GUARD;
+ 	bs->inventory[INVENTORY_DOUBLER] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_DOUBLER;
+ 	bs->inventory[INVENTORY_AMMOREGEN] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_AMMOREGEN;
++#endif
+ 	bs->inventory[INVENTORY_REDFLAG] = bs->cur_ps.powerups[PW_REDFLAG] != 0;
+ 	bs->inventory[INVENTORY_BLUEFLAG] = bs->cur_ps.powerups[PW_BLUEFLAG] != 0;
+ 	bs->inventory[INVENTORY_NEUTRALFLAG] = bs->cur_ps.powerups[PW_NEUTRALFLAG] != 0;
+diff --git a/code/game/bg_misc.c b/code/game/bg_misc.c
+index 767cc7e..c701434 100644
+--- a/code/game/bg_misc.c
++++ b/code/game/bg_misc.c
+@@ -655,6 +655,7 @@ Only in CTF games
+ /* sounds */ ""
+ 	},
+ 
++#ifdef HAVE_MISSIONPACK_ITEMLIST
+ /*QUAKED holdable_kamikaze (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+ */
+ 	{
+@@ -702,6 +703,7 @@ Only in CTF games
+ /* precache */ "",
+ /* sounds */ ""
+ 	},
++#endif
+ 
+ /*QUAKED ammo_nails (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+ */
+@@ -751,6 +753,7 @@ Only in CTF games
+ /* sounds */ ""
+ 	},
+ 
++#ifdef HAVE_MISSIONPACK_ITEMLIST
+ 	//
+ 	// PERSISTANT POWERUP ITEMS
+ 	//
+@@ -817,6 +820,7 @@ Only in CTF games
+ /* precache */ "",
+ /* sounds */ ""
+ 	},
++#endif
+ 
+         
+ 	/*QUAKED team_CTF_neutralflag (0 0 1) (-16 -16 -16) (16 16 16)
+@@ -1214,6 +1218,9 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
+ 		return qtrue;
+ 
+ 	case IT_ARMOR:
++		upperBound = ps->stats[STAT_MAX_HEALTH] * 2;
++
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 		if( bg_itemlist[ps->stats[STAT_PERSISTANT_POWERUP]].giTag == PW_SCOUT ) {
+ 			return qfalse;
+ 		}
+@@ -1222,9 +1229,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
+ 		if( bg_itemlist[ps->stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
+ 			upperBound = ps->stats[STAT_MAX_HEALTH];
+ 		}
+-		else {
+-			upperBound = ps->stats[STAT_MAX_HEALTH] * 2;
+-		}
++#endif
+ 
+ 		if ( ps->stats[STAT_ARMOR] >= upperBound ) {
+ 			return qfalse;
+@@ -1232,12 +1237,14 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
+ 		return qtrue;
+ 
+ 	case IT_HEALTH:
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 		// small and mega healths will go over the max, otherwise
+ 		// don't pick up if already at max
+ 		if( bg_itemlist[ps->stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
+ 			upperBound = ps->stats[STAT_MAX_HEALTH];
+ 		}
+ 		else
++#endif
+ 		if ( item->quantity == 5 || item->quantity == 100 ) {
+ 			if ( ps->stats[STAT_HEALTH] >= ps->stats[STAT_MAX_HEALTH] * 2 ) {
+ 				return qfalse;
+@@ -1253,6 +1260,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
+ 	case IT_POWERUP:
+ 		return qtrue;	// powerups are always picked up
+ 
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	case IT_PERSISTANT_POWERUP:
+ 
+ 		//In Double D we don't want persistant Powerups (or maybe, can be discussed)
+@@ -1273,6 +1281,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
+ 		}
+ 
+ 		return qtrue;
++#endif
+ 
+ 	case IT_TEAM: // team items, such as flags	
+ 		if( gametype == GT_1FCTF ) {
+diff --git a/code/game/bg_pmove.c b/code/game/bg_pmove.c
+index de3d1f5..3f2cb14 100644
+--- a/code/game/bg_pmove.c
++++ b/code/game/bg_pmove.c
+@@ -1707,6 +1707,7 @@ static void PM_Weapon( void ) {
+ 		break;
+ 	}
+ 
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	if( bg_itemlist[pm->ps->stats[STAT_PERSISTANT_POWERUP]].giTag == PW_SCOUT ) {
+ 		addTime /= 1.5;
+ 	}
+@@ -1715,6 +1716,7 @@ static void PM_Weapon( void ) {
+ 		addTime /= 1.3;
+   }
+   else
++#endif
+ 	if ( pm->ps->powerups[PW_HASTE] ) {
+ 		addTime /= 1.3;
+ 	}
+diff --git a/code/game/bg_public.h b/code/game/bg_public.h
+index e7b0ad1..a811ce4 100644
+--- a/code/game/bg_public.h
++++ b/code/game/bg_public.h
+@@ -25,6 +25,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ // because games can change separately from the main system version, we need a
+ // second version that must match between game and cgame
+ 
++#if defined(MISSIONPACK) || !defined(OPENARENA_081_COMPATIBLE)
++// MISSIONPACK and 0.8.5 break ABI and network compatibility, because
++// STAT_PERSISTANT_POWERUP wasn't added at the end of its enum. Sad times.
++#   define HAVE_STAT_PERSISTANT_POWERUP
++// Adding objects to the middle of the bg_itemlist also breaks network compat.
++#   define HAVE_MISSIONPACK_ITEMLIST
++#endif
++
+ #if defined(BG_PUBLIC_H)
+ #else
+ #define BG_PUBLIC_H 1
+@@ -226,13 +234,14 @@ void Pmove (pmove_t *pmove);
+ 
+ //===================================================================================
+ 
+-
+ // player_state->stats[] indexes
+ // NOTE: may not have more than 16
+ typedef enum {
+ 	STAT_HEALTH,
+ 	STAT_HOLDABLE_ITEM,
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	STAT_PERSISTANT_POWERUP,
++#endif
+ 	STAT_WEAPONS,					// 16 bit fields
+ 	STAT_ARMOR,				
+ 	STAT_DEAD_YAW,					// look this direction when dead (FIXME: get rid of?)
+diff --git a/code/game/g_active.c b/code/game/g_active.c
+index d7c2311..a3c484f 100644
+--- a/code/game/g_active.c
++++ b/code/game/g_active.c
+@@ -428,10 +428,13 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
+ 			continue;
+ 
+ 		// regenerate
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 		if( bg_itemlist[client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
+ 			maxHealth = client->ps.stats[STAT_MAX_HEALTH] / 2;
+ 		}
+-		else if ( client->ps.powerups[PW_REGEN] ) {
++		else
++#endif
++		if ( client->ps.powerups[PW_REGEN] ) {
+ 			maxHealth = client->ps.stats[STAT_MAX_HEALTH];
+ 		}
+ 		else {
+@@ -475,6 +478,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
+ 			client->ps.stats[STAT_ARMOR]--;
+ 		}
+ 	}
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	if( bg_itemlist[client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_AMMOREGEN ) {
+ 		int w, max, inc, t, i;
+     int weapList[]={WP_MACHINEGUN,WP_SHOTGUN,WP_GRENADE_LAUNCHER,WP_ROCKET_LAUNCHER,WP_LIGHTNING,WP_RAILGUN,WP_PLASMAGUN,WP_BFG,WP_NAILGUN,WP_PROX_LAUNCHER,WP_CHAINGUN};
+@@ -511,6 +515,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
+ 		  }
+     }
+ 	}
++#endif
+ }
+ 
+ /*
+@@ -959,10 +964,12 @@ void ClientThink_real( gentity_t *ent ) {
+ 	// set speed
+ 	client->ps.speed = g_speed.value;
+ 
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	if( bg_itemlist[client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_SCOUT ) {
+ 		client->ps.speed *= 1.5;
+ 	}
+ 	else
++#endif
+ 	if ( client->ps.powerups[PW_HASTE] ) {
+ 		client->ps.speed *= 1.3;
+ 	}
+@@ -1270,6 +1277,7 @@ void ClientEndFrame( gentity_t *ent ) {
+ 	}
+ 
+ 	// set powerup for player animation
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	if( bg_itemlist[ent->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
+ 		ent->client->ps.powerups[PW_GUARD] = level.time;
+ 	}
+@@ -1282,6 +1290,7 @@ void ClientEndFrame( gentity_t *ent ) {
+ 	if( bg_itemlist[ent->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_AMMOREGEN ) {
+ 		ent->client->ps.powerups[PW_AMMOREGEN] = level.time;
+ 	}
++#endif
+ 	if ( ent->client->invulnerabilityTime > level.time ) {
+ 		ent->client->ps.powerups[PW_INVULNERABILITY] = level.time;
+ 	}
+diff --git a/code/game/g_combat.c b/code/game/g_combat.c
+index 8c61944..692269b 100644
+--- a/code/game/g_combat.c
++++ b/code/game/g_combat.c
+@@ -238,7 +238,9 @@ void TossClientPersistantPowerups( gentity_t *ent ) {
+ 	powerup->r.contents = CONTENTS_TRIGGER;
+ 	trap_LinkEntity( powerup );
+ 
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	ent->client->ps.stats[STAT_PERSISTANT_POWERUP] = 0;
++#endif
+ 	ent->client->persistantPowerup = NULL;
+ }
+ 
+@@ -1078,9 +1080,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
+ 	// unless they are rocket jumping
+ 	if ( attacker->client && attacker != targ ) {
+ 		max = attacker->client->ps.stats[STAT_MAX_HEALTH];
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 		if( bg_itemlist[attacker->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
+ 			max /= 2;
+ 		}
++#endif
+ 		damage = damage * max / 100;
+ 	}
+ 
+diff --git a/code/game/g_items.c b/code/game/g_items.c
+index c5a546c..3f865c6 100644
+--- a/code/game/g_items.c
++++ b/code/game/g_items.c
+@@ -118,6 +118,7 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
+ //======================================================================
+ 
+ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	int		clientNum;
+ 	char	userinfo[MAX_INFO_STRING];
+ 	float	handicap;
+@@ -185,6 +186,7 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
+ 		break;
+ 	}
+ 
++#endif
+ 	return -1;
+ }
+ 
+@@ -280,11 +282,13 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
+         if( !other->client)
+             return RESPAWN_HEALTH;
+         
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	// small and mega healths will go over the max
+ 	if( other->client && bg_itemlist[other->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
+ 		max = other->client->ps.stats[STAT_MAX_HEALTH];
+ 	}
+ 	else
++#endif
+ 	if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
+ 		max = other->client->ps.stats[STAT_MAX_HEALTH];
+ 	} else {
+@@ -318,10 +322,13 @@ int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
+ 
+ 	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
+ 
++#ifdef HAVE_STAT_PERSISTANT_POWERUP
+ 	if( other->client && bg_itemlist[other->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
+ 		upperBound = other->client->ps.stats[STAT_MAX_HEALTH];
+ 	}
+-	else {
++	else
++#endif
++	{
+ 		upperBound = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+ 	}
+ 

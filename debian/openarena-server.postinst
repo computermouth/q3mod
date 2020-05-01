@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  configure)
+    if ! getent passwd Debian-openarena >/dev/null; then
+      adduser --disabled-password --quiet --system \
+        --home /var/games/openarena-server --no-create-home \
+        --gecos "OpenArena dedicated server" \
+	--ingroup games --force-badname Debian-openarena
+    fi
+    # Unlock account, if it was locked by our postrm
+    if [ -f /etc/shadow ]; then
+      usermod -U -e '' Debian-openarena
+    else
+      usermod -U Debian-openarena
+    fi
+    install -d /var/games
+    install -d /var/games/openarena-server
+    chown Debian-openarena:games /var/games/openarena-server
+  ;;
+  abort-upgrade|abort-remove|abort-deconfigure)
+  ;;
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+  ;;
+esac
+
+#DEBHELPER#

@@ -1,0 +1,159 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE=1
+
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+export LC_ALL=C.UTF-8
+export TZ=UTC
+
+DEB_CFLAGS_MAINT_APPEND := \
+	-fsigned-char \
+	$(NULL)
+
+include /usr/share/dpkg/default.mk
+
+%:
+	dh $@
+
+ifeq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
+TARGET = release
+else
+TARGET = debug
+endif
+
+common_options = \
+	V=1 \
+	BUILD_STANDALONE=1 \
+	USE_CODEC_VORBIS=1 \
+	USE_CURL=1 \
+	USE_CURL_DLOPEN=0 \
+	USE_OPENAL=1 \
+	USE_OPENAL_DLOPEN=0 \
+	USE_VOIP=1 \
+	USE_INTERNAL_SPEEX=0 \
+	USE_INTERNAL_ZLIB=0 \
+	USE_LOCAL_HEADERS=0 \
+	$(shell /usr/share/ioquake3/q3arch make ${DEB_HOST_GNU_CPU} ${DEB_HOST_GNU_SYSTEM}) \
+	SDL_CFLAGS= \
+	BUILD_CLIENT=0 \
+	BUILD_SERVER=0 \
+	BUILD_GAME_SO=1 \
+	CROSS_COMPILING=1 \
+	VERSION=$(DEB_VERSION)/$(DEB_VENDOR) \
+	CFLAGS='$(filter-out -fPIE -pie,$(CFLAGS)) $(CPPFLAGS)' \
+	LDFLAGS='$(filter-out -fPIE -pie,$(LDFLAGS))' \
+	$(NULL)
+
+GAME_OPTIONS = \
+	BR=build/normal \
+	BD='$$(BR)' \
+	$(NULL)
+
+GAME_081_OPTIONS = \
+	BR=build/0.8.1-compat \
+	BD='$$(BR)' \
+	OPENARENA_081_COMPATIBLE=1 \
+	$(NULL)
+
+override_dh_auto_build:
+	dh_auto_build -- $(common_options) $(GAME_OPTIONS) $(TARGET)
+	dh_auto_build -- $(common_options) $(GAME_081_OPTIONS) $(TARGET)
+	sed \
+		-e 's!@IOQ3BINARY@!ioquake3!' \
+		-e 's!@IOQ3SELF@!openarena!' \
+		-e 's!@IOQ3ROLE@!client!' \
+		-e 's!@FS_BASEPATH@!/usr/lib/openarena!' \
+		< debian/scripts/openarena.in > debian/scripts/openarena
+	sed \
+		-e 's!@IOQ3BINARY@!ioq3ded!' \
+		-e 's!@IOQ3SELF@!openarena-server!' \
+		-e 's!@IOQ3ROLE@!server!' \
+		-e 's!@FS_BASEPATH@!/usr/lib/openarena-server!' \
+		< debian/scripts/openarena.in > debian/scripts/openarena-server
+	chmod +x debian/scripts/openarena
+	chmod +x debian/scripts/openarena-server
+
+override_dh_clean:
+	dh_clean --exclude README-0.8.8~
+
+override_dh_auto_clean:
+	rm -f build-stamp
+	rm -rf build
+	rm -f debian/scripts/openarena
+	rm -f debian/scripts/openarena-server
+
+override_dh_auto_install: DESTDIR = debian/tmp
+override_dh_auto_install:
+	install -d $(DESTDIR)/usr/games
+	install -d $(DESTDIR)/usr/lib/openarena/baseoa/pak0/
+	install -d $(DESTDIR)/usr/lib/openarena/baseoa/pak6-patch085/
+	install -d $(DESTDIR)/usr/lib/openarena/baseoa/pak6-patch088/
+	install -d $(DESTDIR)/usr/lib/openarena/missionpack/
+	install -d $(DESTDIR)/usr/lib/openarena-server/baseoa/
+	install -d $(DESTDIR)/usr/lib/openarena-server/missionpack/
+	# The client currently needs two builds:
+	# * one compatible with OA 0.8.1 pure servers
+	# * one compatible with OA 0.8.5 and 0.8.8 pure servers
+	# On impure servers, we default to the latest.
+	install -m644 build/0.8.1-compat/baseq3/*.so \
+		$(DESTDIR)/usr/lib/openarena/baseoa/pak0/
+	install -m644 build/normal/baseq3/*.so \
+		$(DESTDIR)/usr/lib/openarena/baseoa/pak6-patch088
+	( cd $(DESTDIR)/usr/lib/openarena/baseoa/pak6-patch085 && \
+		ln -s ../pak6-patch088/*.so . )
+	( cd $(DESTDIR)/usr/lib/openarena/baseoa && \
+		ln -s pak6-patch088/*.so . )
+	# The "mission pack" doesn't currently have incompatible versions so
+	# just use the latest
+	install -m644 build/normal/missionpack/*.so\
+		$(DESTDIR)/usr/lib/openarena/missionpack/
+	# The server only needs the latest version, since it's the server
+	# that determines which version clients are expected to be
+	# compatible with
+	install -m644 build/normal/baseq3/qagame*.so \
+		$(DESTDIR)/usr/lib/openarena-server/baseoa/
+	install -m644 build/normal/missionpack/qagame*.so\
+		$(DESTDIR)/usr/lib/openarena-server/missionpack/
+
+override_dh_strip:
+	# Don't generate openarena-server-dbgsym since it contains files
+	# that duplicate files from openarena. Their size is insignificant
+	# when compared with openarena-data, so it doesn't seem worthwhile
+	# to add an openarena-common package to make them shareable.
+	dh_strip -popenarena --dbgsym-migration='openarena-dbg (<< 0.8.8-19~)'
+	dh_strip -popenarena-server --no-automatic-dbgsym
+
+# ---------------------------------------------------------------------------
+
+ORIG_SOURCE = openarena
+ORIG_REL = 0.8.8
+ORIG_COPYRIGHT = $(dir $(firstword $(MAKEFILE_LIST)))/copyright
+
+.PHONY: get-orig-source
+get-orig-source:
+	test ! -e get-orig-source
+	mkdir get-orig-source
+	if test -e ../oa-${ORIG_REL}.tar.bz2; then \
+		cp ../oa-${ORIG_REL}.tar.bz2 get-orig-source/; \
+	else \
+		wget -O get-orig-source/oa-${ORIG_REL}.tar.bz2 \
+		http://files.poulsander.com/~poul19/public_files/oa/dev088/oa-${ORIG_REL}.tar.bz2; \
+	fi
+	test "`sha256sum -b get-orig-source/oa-${ORIG_REL}.tar.bz2`" = \
+	"47fed4ea740278aa970538fc15819a4f6b8631eda380431ba09eb1b31ecbe5ad *get-orig-source/oa-${ORIG_REL}.tar.bz2"
+	mk-origtargz \
+		--package=${ORIG_SOURCE} \
+		--copyright-file=${ORIG_COPYRIGHT} \
+		--repack \
+		--repack-suffix=+dfsg \
+		--compression xz \
+		--directory ${CURDIR} \
+		--version ${ORIG_REL} \
+		get-orig-source/oa-${ORIG_REL}.tar.bz2
+	rm -fr get-orig-source
+
+# to be invoked from a git checkout, tarball ends up in ../build-area
+maintainer-get-orig-source:
+	$(MAKE) -f debian/rules get-orig-source
+	mv -i -v ${ORIG_SOURCE}_${ORIG_REL}+dfsg.orig.tar.xz ../build-area/
+	@echo "try using:"
+	@echo "gbp import-orig ../build-area/${ORIG_SOURCE}_${ORIG_REL}+dfsg.orig.tar.xz"

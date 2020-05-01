@@ -1,0 +1,71 @@
+Source: openarena
+Section: games
+Priority: optional
+Maintainer: Debian Games Team <pkg-games-devel@lists.alioth.debian.org>
+Uploaders:
+ Bruno "Fuddl" Kleinert <fuddl@debian.org>,
+ Gonéri Le Bouder <goneri@rulezlan.org>,
+ Simon McVittie <smcv@debian.org>,
+Build-Depends:
+ debhelper (>= 10),
+ dpkg-dev (>= 1.16.1),
+ ioquake3-server (>= 1.36+u20150730+dfsg1-1~),
+Standards-Version: 4.2.1
+Vcs-Git: https://salsa.debian.org/games-team/openarena.git
+Vcs-Browser: https://salsa.debian.org/games-team/openarena
+Homepage: http://openarena.ws/
+Rules-Requires-Root: no
+
+Package: openarena
+Architecture: any
+Depends:
+ ioquake3 (>= 1.36+u20130504),
+ openarena-081-maps,
+ openarena-081-misc,
+ openarena-081-players,
+ openarena-081-players-mature,
+ openarena-081-textures,
+ openarena-085-data,
+ openarena-088-data,
+ openarena-data (<< 0.8.6~),
+ openarena-data (>= 0.8.5-3~),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends:
+ openarena-oacmp1,
+Description: fast-paced 3D first-person shooter
+ OpenArena is an open-source content package for ioQuake3 licensed under the
+ GPL, effectively creating a free stand-alone game. Though OpenArena is a free
+ replacement for id Software Inc.'s Quake 3 Arena, it is NOT compatible with
+ the proprietary game!
+ .
+ OpenArena might be considered unsuitable for children.
+ .
+ This package installs the OpenArena client.
+
+Package: openarena-server
+Architecture: any
+Depends:
+ adduser,
+ ioquake3-server (>= 1.36+u20130504),
+ lsb-base,
+ openarena-081-maps,
+ openarena-081-misc,
+ openarena-081-players,
+ openarena-081-players-mature,
+ openarena-081-textures,
+ openarena-085-data,
+ openarena-088-data,
+ openarena-data (<< 0.8.6~),
+ openarena-data (>= 0.8.5),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Suggests:
+ openarena-oacmp1,
+Description: server and game logic for the game OpenArena
+ OpenArena is an open-source content package for ioQuake3 licensed under the
+ GPL, effectively creating a free stand-alone game. Though OpenArena is a free
+ replacement for id Software Inc.'s Quake 3 Arena, it is NOT compatible with
+ the proprietary game!
+ .
+ This package installs the OpenArena dedicated server and its init script.

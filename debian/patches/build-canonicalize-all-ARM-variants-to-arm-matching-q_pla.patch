@@ -1,0 +1,42 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Sat, 24 Jun 2017 19:08:38 +0100
+Subject: build: canonicalize all ARM variants to "arm", matching q_platform.h
+
+The ARCH in the Makefile must match the ARCH_STRING in q_platform.h;
+otherwise, ioquake3 will install (for instance) uiARCH.so but look for
+uiARCH_STRING.so, which isn't going to go well (particularly for
+the modular renderer).
+
+Like i386, but unlike most (all?) other Linux platforms, uname -m on
+32-bit ARM machines can have various results starting with "arm",
+depending on the specific CPU version (e.g. Raspberry Pi is armv6l,
+RPi2 is armv7l). Again similar to the x86 family,
+it's appropriate for them to share an architecture suffix;
+q_platform.h has traditionally used "arm" so let's use that.
+
+64-bit ARM makes a clean break from this, much like 64-bit x86 does:
+uname -m produces a string not starting with arm (specifically
+"aarch64"), and gcc predefines __aarch64__ instead of __arm__.
+As a result, it is unaffected by this change.
+
+(cherry picked from ioquake3 commit c91fab3900345d047f085d1e467521bba1ebd28f)
+
+Forwarded: https://github.com/OpenArena/gamecode/pull/17
+Applied-upstream: https://github.com/OpenArena/gamecode/commit/732d32079b6675f8595471af7d252e190c80f006
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 84b58b3..11a9efc 100644
+--- a/Makefile
++++ b/Makefile
+@@ -6,7 +6,7 @@
+ 
+ COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]'|sed -e 's/\//_/g')
+ 
+-COMPILE_ARCH=$(shell uname -m | sed -e s/i.86/i386/)
++COMPILE_ARCH=$(shell uname -m | sed -e s/i.86/i386/ | sed -e 's/^arm.*/arm/')
+ 
+ ifeq ($(COMPILE_PLATFORM),sunos)
+   # Solaris uname and GNU uname differ

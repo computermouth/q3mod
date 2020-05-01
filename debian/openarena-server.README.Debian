@@ -1,0 +1,70 @@
+OpenArena dedicated server for Debian
+=====================================
+
+Running one server instance
+---------------------------
+
+The openarena-server init script runs a dedicated server as the user
+"Debian-openarena". This is a simple setup suitable for running one server
+on a machine; by default it will run a deathmatch server.
+
+The Debian-openarena user's home directory is /var/games/openarena-server,
+and the equivalent of ~/.openarena for the default server is
+/var/games/openarena-server/server.oa.
+
+By default, the init script will use etc/openarena-server/server.cfg,
+which is a symlink to /etc/openarena-server/server.cfg. You can edit
+this file, or put an alternative configuration in
+/var/games/openarena-server/server.oa/baseoa and change
+/etc/default/openarena-server to exec that.
+
+The whole /etc/openarena-server directory is symlinked into the engine's
+search path as etc/openarena-server, so you can place files there and
+exec them with commands like "/exec etc/openarena-server/ctf.cfg".
+
+The server can be managed in the usual way, e.g. via service(8)
+and update-rc.d(8) commands like
+
+    service openarena-server stop
+    service openarena-server start
+    update-rc.d openarena-server disable
+    update-rc.d openarena-server enable
+
+which should work for all of Debian's supported init systems.
+
+Running multiple server instances with systemd
+----------------------------------------------
+
+Under systemd, openarena-server supports additional instances of the server,
+so you can run a deathmatch server and a Capture the Flag server, or
+a vanilla OpenArena server and an Excessive Plus server.
+
+Each instance openarena-server@INSTANCE.service has configuration and state in
+/var/games/openarena-server/INSTANCE.oa, and will execute
+/etc/openarena-server/INSTANCE.cfg on startup.
+
+To set a parameter that can only be given on the command line, such as
+fs_game or net_port, you can create /etc/default/openarena-server@INSTANCE
+or a systemd "drop-in" file, and set DAEMON_OPTS there. Setting a
+unique net_port for each server is recommended: if you do not, each
+server will try ports above its configured net_port until it finds one
+that is not in use, so the mapping between servers and ports will be arbitrary.
+
+The instance name "server" cannot be used without disabling and stopping
+openarena-server.service, since it shares its configuration with that
+service.
+
+For instance, these shell commands (as root) would set up a Capture the
+Flag server on port 27970:
+
+    cat > /etc/default/openarena-server@ctf
+    DAEMON_OPTS="+set net_port 27970"
+    EOF
+    cat > /etc/openarena-server/ctf.cfg <<EOF
+    sv_hostname "My Capture the Flag Server"
+    g_gametype 4
+    map islandctf
+    EOF
+    systemctl daemon-reload
+    systemctl enable openarena-server@ctf.service
+    systemctl start openarena-server@ctf.service

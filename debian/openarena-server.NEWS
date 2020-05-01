@@ -1,0 +1,45 @@
+openarena-server (0.8.8-10) experimental; urgency=low
+
+  openarena-server configuration has changed in this version for
+  better systemd support.
+
+  The DAEMON_OPTS variable in /etc/default/openarena-server no longer
+  contains a configurable "+exec" command. /etc/openarena-server/server.cfg
+  will always be executed in addition to whatever is specified in
+  DAEMON_OPTS, and the default DAEMON_OPTS is now empty.
+
+  The START_DAEMON variable in /etc/default/openarena-server is no longer
+  supported. If openarena-server was previously disabled via START_DAEMON,
+  upgrading to this version will run "update-rc.d openarena-server disable"
+  to disable it in the correct way.
+
+  systemd users can now enable additional instances of the server,
+  openarena-server@INSTANCE.service, which use
+  /etc/default/openarena-server@INSTANCE
+  and /etc/openarena-server/INSTANCE.cfg instead.
+  See /usr/share/doc/openarena-server/README.Debian for details.
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 05 Feb 2015 11:04:07 +0000
+
+openarena-server (0.8.8-1) experimental; urgency=low
+
+  In the Debian packaging for OpenArena 0.8.1 and 0.8.5, the openarena
+  package depended on the openarena-server package, and the openarena-server
+  package did not run a server by default.
+
+  Since OpenArena 0.8.8, the openarena package no longer depends on
+  openarena-server. New installations of openarena-server will run a server
+  from the init script by default.
+
+  The upgrade from 0.8.5 to 0.8.8 attempts to detect whether the server was
+  enabled. If it was not, it creates a file
+  "/var/games/openarena-server/init-script-disabled-by-upgrade";
+  if that file exists, the init script does not start the server.
+  You can restore normal behaviour by deleting it.
+
+  This special upgrade behaviour is likely to be removed after Debian 7
+  is released, so if you do not intend to run an OpenArena dedicated
+  server, please remove the openarena-server package before upgrading
+  to Debian 8.
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 26 Feb 2012 20:16:04 +0000

@@ -1,0 +1,5 @@
+debian/openarena.desktop usr/share/applications
+debian/openarena128.png usr/share/icons/hicolor/128x128/apps
+debian/scripts/openarena usr/games
+usr/lib/openarena/*/*.so
+usr/lib/openarena/*/*/*.so

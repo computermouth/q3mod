@@ -1,0 +1,16 @@
+# backwards compat with older openarena-server
+etc/openarena-server usr/lib/openarena-server/baseoa/etc/openarena-server
+etc/openarena-server/server.cfg usr/lib/openarena-server/baseoa/debian_server.cfg
+usr/share/doc/openarena-088-data/CREDITS-0.8.8 usr/share/doc/openarena-server/CREDITS
+usr/share/doc/openarena-088-data/readme_088.txt.gz usr/share/doc/openarena-server/README.gz
+usr/share/doc/openarena-data/changelog.gz usr/share/doc/openarena-server/changelog.gz
+usr/share/games/openarena/baseoa/pak0.pk3 usr/lib/openarena-server/baseoa/pak0.pk3
+usr/share/games/openarena/baseoa/pak1-maps.pk3 usr/lib/openarena-server/baseoa/pak1-maps.pk3
+usr/share/games/openarena/baseoa/pak2-players-mature.pk3 usr/lib/openarena-server/baseoa/pak2-players-mature.pk3
+usr/share/games/openarena/baseoa/pak2-players.pk3 usr/lib/openarena-server/baseoa/pak2-players.pk3
+usr/share/games/openarena/baseoa/pak4-textures.pk3 usr/lib/openarena-server/baseoa/pak4-textures.pk3
+usr/share/games/openarena/baseoa/pak5-TA.pk3 usr/lib/openarena-server/baseoa/pak5-TA.pk3
+usr/share/games/openarena/baseoa/pak6-misc.pk3 usr/lib/openarena-server/baseoa/pak6-misc.pk3
+usr/share/games/openarena/baseoa/pak6-patch085.pk3 usr/lib/openarena-server/baseoa/pak6-patch085.pk3
+usr/share/games/openarena/baseoa/pak6-patch088.pk3 usr/lib/openarena-server/baseoa/pak6-patch088.pk3
+usr/share/games/openarena/missionpack/mp-pak0.pk3 usr/lib/openarena-server/missionpack/mp-pak0.pk3
