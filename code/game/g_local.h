@@ -261,6 +261,9 @@ typedef struct {
 	int			voteCount;			// to prevent people from constantly calling votes
 	int			teamVoteCount;		// to prevent people from constantly calling votes
 	qboolean	teamInfo;			// send team overlay updates?
+	
+	qboolean	homing_status;
+	
 	//elimination:
 	int		roundReached;			//Only spawn if we are new to this round
 	int		livesLeft;			//lives in LMS
@@ -646,6 +649,10 @@ void	G_TeamCommand( team_t team, char *cmd );
 void	G_KillBox (gentity_t *ent);
 gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match);
 gentity_t *G_PickTarget (char *targetname);
+
+qboolean visible(gentity_t * ent1, gentity_t * ent2);
+gentity_t * findradius(gentity_t *from, vec3_t org, float rad);
+
 void	G_UseTargets (gentity_t *ent, gentity_t *activator);
 void	G_SetMovedir ( vec3_t angles, vec3_t movedir);
 
