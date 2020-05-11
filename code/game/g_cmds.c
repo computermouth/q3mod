@@ -2159,16 +2159,6 @@ void Cmd_GetMappage_f( gentity_t *ent ) {
 	trap_SendServerCommand( ent-g_entities, string );
 }
 
-void Cmd_SetHoming_f( gentity_t *ent ) {
-    if (ent->client->pers.homing_status == 1) {
-		trap_SendServerCommand( ent - g_entities, va("print \"Homing Missiles are off.\n\""));
-		ent->client->pers.homing_status = 0;
-	} else {
-		trap_SendServerCommand( ent - g_entities, va("print \"Homing Missiles are on.\n\""));
-		ent->client->pers.homing_status = 1;
-	}
-}
-
 //KK-OAX This is the table that ClientCommands runs the console entry against. 
 commands_t cmds[ ] = 
 {
@@ -2223,10 +2213,7 @@ commands_t cmds[ ] =
   //KK-OAX
   { "freespectator", CMD_NOTEAM, StopFollowing },
   { "getmappage", 0, Cmd_GetMappage_f },
-  { "gc", 0, Cmd_GameCommand_f },
-  
-  // custom
-  { "homing", 0, Cmd_SetHoming_f }
+  { "gc", 0, Cmd_GameCommand_f }
   
 };
 
