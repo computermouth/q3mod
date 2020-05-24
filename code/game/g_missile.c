@@ -59,6 +59,26 @@ void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
 
 /*
 ================
+G_ExplodeCluster
+
+Explode a cluster grenade into three shards
+================
+*/
+void G_ExplodeCluster( gentity_t *ent ) {
+	vec3_t		dir;
+	
+	VectorSet(dir, 33, 33, 10);
+	fire_cgrenade(ent->parent, ent->r.currentOrigin, dir);
+	VectorSet(dir, -33, 33, 10);
+	fire_cgrenade(ent->parent, ent->r.currentOrigin, dir);
+	VectorSet(dir, 0, -33, 10);
+	fire_cgrenade(ent->parent, ent->r.currentOrigin, dir);
+	
+}
+
+
+/*
+================
 G_ExplodeMissile
 
 Explode a missile without an impact
@@ -89,6 +109,9 @@ void G_ExplodeMissile( gentity_t *ent ) {
                         g_entities[ent->r.ownerNum].client->accuracy[ent->s.weapon][1]++;
 		}
 	}
+	
+	if ( !strcmp(ent->classname, "cgrenade"))
+		G_ExplodeCluster(ent);
 
 	trap_LinkEntity( ent );
 }
@@ -481,6 +504,11 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 			}
 		}
 	}
+	
+	// cluster grenades will spawn 3 new grenades
+	if (!strcmp(ent->classname, "cgrenade")){
+		G_ExplodeCluster(ent);
+	}
 
 	trap_LinkEntity( ent );
 }
@@ -602,6 +630,52 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 
 /*
 =================
+fire_cgrenade
+=================
+*/
+gentity_t *fire_cgrenade (gentity_t *self, vec3_t start, vec3_t dir) {
+	gentity_t	*bolt;
+
+	VectorNormalize (dir);
+
+	bolt = G_Spawn();
+	bolt->classname = "grenade";
+	bolt->nextthink = level.time + 2500;
+	bolt->think = G_ExplodeMissile;
+	bolt->s.eType = ET_MISSILE;
+	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+	bolt->s.weapon = WP_GRENADE_LAUNCHER;
+	bolt->s.eFlags = EF_BOUNCE_HALF;
+	bolt->r.ownerNum = self->s.number;
+//unlagged - projectile nudge
+	// we'll need this for nudging projectiles later
+	bolt->s.otherEntityNum = self->s.number;
+//unlagged - projectile nudge
+	bolt->parent = self;
+	bolt->damage = 100;
+	bolt->splashDamage = 100;
+	bolt->splashRadius = 150;
+	bolt->methodOfDeath = MOD_GRENADE;
+	bolt->splashMethodOfDeath = MOD_GRENADE_SPLASH;
+	bolt->clipmask = MASK_SHOT;
+	bolt->target_ent = NULL;
+
+	bolt->s.pos.trType = TR_GRAVITY;
+	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+	VectorCopy( start, bolt->s.pos.trBase );
+	VectorScale( dir, 300, bolt->s.pos.trDelta );
+	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
+
+	VectorCopy (start, bolt->r.currentOrigin);
+
+	return bolt;
+}
+
+//=============================================================================
+
+
+/*
+=================
 fire_grenade
 =================
 */
@@ -611,8 +685,8 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorNormalize (dir);
 
 	bolt = G_Spawn();
-	bolt->classname = "grenade";
-	bolt->nextthink = level.time + 2500;
+	bolt->classname = "cgrenade";
+	bolt->nextthink = level.time + 1500;
 	bolt->think = G_ExplodeMissile;
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
